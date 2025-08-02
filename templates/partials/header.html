@@ -1,0 +1,30 @@
+{% load static %}
+
+<header>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-expand-sm navbar-dark" style='background-color:#343a40'>
+        <div id="logo">
+            <!-- this line if for the logo! Place your logo in '../static/images/logo.png' and then uncomment this line below to use it! -->
+            <!-- <img class="navbar-brand" src="{% static 'images/logo.png' %}" alt="NCU Logo" height="61"> -->
+        </div>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link header-text" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/xray/view">View X-Rays</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/xray/upload">Upload X-Rays</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/products">Products</a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger my-2 my-sm-0" type="submit">Log Out</button>
+            </form>
+        </div>
+    </nav>
+</header>

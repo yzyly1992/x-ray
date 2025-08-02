@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+
+{% block "content" %}
+
+<div class="container" id="images">
+    <div id="image_options">
+
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" name="sharpen_btn" class="btn btn-dark btn-block">Sharpen All Images</button>
+        </form>
+
+        <form method="POST">
+            {% csrf_token %}
+            <button type="submit" name="contour_btn" class="btn btn-dark btn-block">Contour All Images</button>
+        </form>
+
+        <form method="POST" action="{% url 'delete_all_xrays' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-block">Delete All Images</button>
+        </form>
+    </div>
+
+    <div class="row">
+        {% for Xray in xray_img %}
+        <div class="col-md-4">
+            <div class="card">
+                <img src="{{ Xray.xray_img.url }}" class="card-img-top"/>
+                <div class="card-body">
+                    <p class="class-label" src="{{ Xray.prediction }}">AI Result: {{ Xray.prediction }}</p>
+                    <p class="probability">Probability: {% if Xray.probability == 0 %}0{% else %}{{ Xray.probability|floatformat:"2" }}{% endif %} %</p>
+                    <form method="POST" action="{% url 'get_ai_result' %}">
+                        {% csrf_token %}
+                        <button type="submit" name="get_ai_result_btn" value="{{ Xray.id }}" class="btn btn-primary btn-block">Get AI Result</button>
+                    </form>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" name="view_btn" value="{{ Xray.id }}"
+                            class="btn btn-secondary btn-block">View</button>
+                    </form>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" name="sharpen_one_btn" value="{{ Xray.id }}"
+                            class="btn btn-secondary btn-block">Sharpen</button>
+                    </form>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" name="contour_one_btn" value="{{ Xray.id }}"
+                            class="btn btn-secondary btn-block">Contour</button>
+                    </form>
+                    <form method="POST" action="{% url 'delete_xray' Xray.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-block">Delete</button>
+                    </form>
+                    {% if Xray.user_feedback %}
+                    <p class="feedback">Feedback: Healthy</p>
+                    {% else %}
+                    <p class="feedback">Feedback: Not Healthy</p>
+                    {% endif %}
+                    <form method="POST">
+                        {% csrf_token %}
+                        <!-- <button type="submit" name="view_btn" value="{{ Xray.id }}" class="btn btn-secondary btn-block">View</button> -->
+                        <!-- Add buttons to provide user feedback -->
+                        <button type="submit" name="feedback_{{ Xray.id }}" value="healthy" class="btn btn-success btn-block">Healthy</button>
+                        <button type="submit" name="feedback_{{ Xray.id }}" value="abnormal" class="btn btn-danger btn-block">Not Healthy</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    #image_options {
+        display: flex;
+        justify-content: space-around;
+    }
+    .card-body {
+        background-color: #343a40;
+        }
+    .class-label {
+        font-weight: bold;
+        font-size: 18px;
+        color: rgb(249, 245, 245);
+    }
+    .probability {
+        font-size: 14px;
+        color: rgb(248, 245, 245);
+    }
+    .feedback {
+        font-weight: bold;
+        font-size: 18px;
+        color: rgb(249, 245, 245);
+    }
+</style>
+
+{% endblock %}
+

@@ -1,0 +1,52 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  {% include "partials/head.html" %}
+  <title>Log In</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="{% static '/stylesheets/style.css' %}" />
+</head>
+
+<body class="text-center">
+
+  {% block content %}
+
+  <form class="form-signin" method="post">
+    <!-- this line if for the logo! Place your logo in '../static/images/logo.png' and then uncomment this line below to use it! -->
+    <!-- <img class="mb-4" src="{% static 'images/logo.png' %}" alt="" width="180" height="244"> -->
+    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+    
+    {% csrf_token %}
+    
+    <div id="form">
+      {{ form.as_p }}
+    </div>
+
+    <div class="checkbox mb-3">
+      <label>
+        <input type="checkbox" value="remember-me"> Remember me
+      </label>
+    </div>
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+
+    <p></p><!--  lazy styling using a p tag to separate the buttons. Bad practice I know -->
+
+    <!-- <form class="form-inline my-2 my-lg-0" href="{% url 'register' %}">
+      <p>Not a member? <button class="btn btn-outline-danger my-2 my-sm-0" type="submit">sign up!</button></p>
+    </form> -->
+
+    <p>Not a member? <a class="btn btn-outline-danger my-2 my-sm-0" href="{% url 'register' %}">Sign up!</a></p>
+
+
+    <p class="mt-5 mb-3 text-muted">&copy; 2017-2020</p>
+  </form>
+
+  {% endblock %}
+  
+</body>
+
+</html>

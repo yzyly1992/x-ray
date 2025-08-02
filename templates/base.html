@@ -1,0 +1,57 @@
+{% load static %}
+
+
+{% if user.is_authenticated %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Head -->
+    {% include "partials/head.html" %}
+    <title>NCU</title>
+</head>
+
+<body>
+    <!-- Header -->
+    {% include "partials/header.html" %}
+
+    <div class="content-main">
+        {% block "content" %}
+        <!-- Extend block to add your own body content -->
+        {% endblock %}
+    </div>
+    <!-- Footer -->
+    {% include "partials/footer.html" %}
+</body>
+
+</html>
+
+{% else %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% include "partials/head.html" %}
+    <title>Log In</title>
+
+</head>
+
+<body>
+
+    <div class="center-err">
+        <h2 class="h2-error">
+            <!-- this line if for the logo! Place your logo in '../static/images/logo.png' and then uncomment this line below to use it! -->
+            <!-- <img class="mb-4" src="{% static 'images/logo.png' %}" alt="" width="180" height="244"> -->
+            Authentication Error
+        </h2>
+    </div>
+    <h4 class="click-signin">Click <a href="/"> here </a> to go home (if you are not signed in, this will take you to the login page)</h4>
+
+    {% include "partials/footer.html" %}
+</body>
+
+</html>
+
+{% endif %}

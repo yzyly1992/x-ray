@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block "content" %}
+
+<h1 class="d-flex justify-content-center align-items-center">Upload an Image</h1>
+
+<div class="d-flex justify-content-center align-items-center">
+  <form class="form-d-flex" method='post' enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary btn-dark">Upload</button>
+  </form>
+</div>
+
+<style>
+  label {
+    display: none;
+  }
+
+  input {
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+{% endblock %}

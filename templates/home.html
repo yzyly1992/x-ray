@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+<!-- redirect to login page if not logged in -->
+{% block "content" %}
+
+<div class="container">
+  <div class="col-md">
+    <h3>Welcome {{ user.username }}!</h3>
+    <p>This is an x-ray processing tool to help sharpen and contour the images you want.</p>
+  </div>
+</div>
+
+{% endblock %}
