@@ -8,5 +8,8 @@ dependencies = [
     "Pillow==9.4.0",
     "stripe==5.2.0",
     "jupyter==1.0.0",
-    "python-decouple==3.8"
+    "python-decouple==3.8",
+    "torch==2.1.2",
+    "torchvision==0.16.2",
+    "numpy<2.0",
 ]
