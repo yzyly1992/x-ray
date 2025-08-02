@@ -1,5 +1,12 @@
 ## Get Started!
 
+- Install dependencies: `uv sync`
+- Migrate the database: `uv run python manage.py migrate`
+- Load fixture: `uv run python manage.py loaddata users/fixtures/user_and_groups`
+- Run the development server: `uv run python manage.py runserver`
+
+## Get Started! (Legacy - pip/venv)
+
 - Create a venv: python -m venv venv (or python3 -m venv venv on Mac / Linux)
 - Activate the venv
   - .\venv\Scripts\activate.ps1 for PowerShell
