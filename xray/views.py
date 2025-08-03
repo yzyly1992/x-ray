@@ -78,11 +78,6 @@ def display_xrays(request):
             elif feedback == 'abnormal':
                 xray.user_feedback = False
             xray.save()
-            new_data, new_feedback = prepare_new_data_and_feedback(xray.xray_img, feedback)
-            # Perform retraining here
-            if new_data is not None and new_feedback is not None:
-                # Perform retraining here
-                retrain_model(new_data, new_feedback)
         return redirect('display_xrays')
     
 
@@ -203,8 +198,30 @@ import torch
 from torchvision import models, transforms
 from PIL import Image
 
-# Load the pretrained DenseNet model and its saved state dictionary
-def load_model():
+try:
+    from mmdet.apis import DetInferencer
+    MMDET_AVAILABLE = True
+except ImportError:
+    MMDET_AVAILABLE = False
+    print("MMDetection not available, falling back to DenseNet model")
+
+# Configuration for mmdetection model
+config_path = os.path.join(os.path.dirname(model_path), 'bone_codetr_config.py')
+checkpoint_path = model_path  # The .pth file path
+
+# Validate paths exist
+if not os.path.exists(config_path):
+    print(f"Warning: MMDetection config file not found at {config_path}")
+    config_path = None
+if not os.path.exists(checkpoint_path):
+    print(f"Warning: Model checkpoint not found at {checkpoint_path}")
+    checkpoint_path = None
+
+# Class names for bone disease detection
+CLASS_NAMES = ['depression', 'flatten', 'fracture', 'irregular_new_bone', 'spurformation']
+
+# Load the pretrained DenseNet model (fallback)
+def load_densenet_model():
     model = models.densenet121(pretrained=False)
     num_ftrs = model.classifier.in_features
     model.classifier = torch.nn.Sequential(
@@ -217,10 +234,86 @@ def load_model():
     model.eval()
     return model
 
+# Load the mmdetection DINO model
+def load_mmdet_model():
+    if not MMDET_AVAILABLE:
+        print("MMDetection not available")
+        return None
+    
+    if not config_path or not checkpoint_path:
+        print("MMDetection model files not found, using fallback model")
+        return None
+    
+    try:
+        # Set device
+        device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        
+        # Initialize the DetInferencer with the trained model
+        inferencer = DetInferencer(config_path, checkpoint_path, device)
+        print("MMDetection DINO model loaded successfully")
+        return inferencer
+    except Exception as e:
+        print(f"Error loading mmdetection model: {e}")
+        return None
 
 def classify_image(image):
-    model = load_model()  # Load the model here
-    image_tensor = eval_transforms(image).unsqueeze(0)  # Preprocess the image and add batch dimension
+    """
+    Classify X-ray image using mmdetection DINO model for object detection
+    Falls back to DenseNet if mmdetection is not available
+    """
+    if MMDET_AVAILABLE:
+        # Try to use mmdetection model first
+        inferencer = load_mmdet_model()
+        if inferencer is not None:
+            try:
+                # Save PIL image to temporary file for mmdetection
+                import tempfile
+                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
+                    image.save(tmp_file.name)
+                    
+                    # Run inference
+                    result = inferencer(tmp_file.name, out_dir=None)
+                    
+                    # Clean up temporary file
+                    os.unlink(tmp_file.name)
+                    
+                    # Process results
+                    predictions = result['predictions'][0]
+                    
+                    if len(predictions['bboxes']) > 0:
+                        # Get the detection with highest score
+                        scores = predictions['scores']
+                        labels = predictions['labels']
+                        
+                        max_score_idx = scores.argmax()
+                        max_score = scores[max_score_idx]
+                        detected_class_idx = labels[max_score_idx]
+                        
+                        # Map class index to class name
+                        class_label = CLASS_NAMES[detected_class_idx] if detected_class_idx < len(CLASS_NAMES) else "Unknown"
+                        class_probability = float(max_score)
+                        
+                        # Determine if healthy or not based on detections
+                        if max_score > 0.5:  # Confidence threshold
+                            health_status = "Not Healthy"
+                            final_label = f"Detected: {class_label}"
+                        else:
+                            health_status = "Healthy"
+                            final_label = "Healthy"
+                        
+                        return final_label, class_probability
+                    else:
+                        # No detections found - likely healthy
+                        return "Healthy", 0.95
+                        
+            except Exception as e:
+                print(f"Error in mmdetection inference: {e}")
+                # Fall back to DenseNet
+                pass
+    
+    # Fallback to original DenseNet model
+    model = load_densenet_model()
+    image_tensor = eval_transforms(image).unsqueeze(0)
     with torch.no_grad():
         output = model(image_tensor)
         _, predicted = torch.max(output, 1)
@@ -235,13 +328,6 @@ def xray_upload(request):
         form = XrayForm(request.POST, request.FILES)
 
         if form.is_valid():
-            # xray_instance = form.save()
-            # image_path = xray_instance.xray_img.path
-            # img = Image.open(image_path)
-            # class_label, class_probability = classify_image(img)
-            # xray_instance.prediction = class_label
-            # xray_instance.probability = round(class_probability,4) * 100
-
             xray_instance = form.save(commit=False)
 
             # Resize the image to 1:1 ratio and keep the center
@@ -272,77 +358,6 @@ def xray_upload(request):
         form = XrayForm()
     return render(request, 'image_upload.html', {'form': form})
 
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, models, transforms
-
-def retrain_model(new_data, new_feedback):
-    if new_data == None:
-        pass
-    # Load the pretrained DenseNet model and reset the final fully connected layer
-    model = models.densenet121(pretrained=False)  # Set pretrained=False to avoid conflicts
-    num_ftrs = model.classifier.in_features
-    model.classifier = nn.Sequential(
-        nn.Linear(num_ftrs, 512),
-        nn.ReLU(inplace=True),
-        nn.Dropout(0.5),
-        nn.Linear(512, 2)
-    )
-
-    # Load the old model.pth
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-
-    # Set model to training mode and move it to the GPU if available
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = model.to(device)
-    model.train()
-
-    # Define a loss function and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-
-    # Set the model to train mode
-    model.train()
-
-    # Load data and feedback into DataLoader
-    dataset = torch.utils.data.TensorDataset(new_data, torch.tensor([new_feedback]))
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True)
-
-    # Train for one epoch on the new data
-    for epoch in range(1):
-        for inputs, labels in data_loader:
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-    print("got the new model!!!!!!!!!!!!!")
-    # Save the best model weights to model.pth
-    torch.save(model.state_dict(), model_path)
-
-def prepare_new_data_and_feedback(new_image, new_feedback):
-    # Check if the new image and feedback are available
-    if new_image and new_feedback:
-
-        # Preprocess the new image
-        eval_transforms = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-
-        image = Image.open(new_image)
-        image_tensor = eval_transforms(image).unsqueeze(0)  # Preprocess the image and add batch dimension
-
-        # Convert the feedback to 1 (Healthy) or 0 (Not Healthy)
-        new_feedback = 1 if new_feedback == 'healthy' else 0
-
-        # Return the new data and feedback
-        return image_tensor, new_feedback
-
-    # If new data or feedback is not available, return None
-    return None, None
-
 def get_ai_result(request):
     if request.method == "POST":
         xray_id = request.POST.get("get_ai_result_btn")
@@ -354,6 +369,6 @@ def get_ai_result(request):
         xray.prediction = class_label
         xray.probability = round(class_probability, 4) * 100
         xray.save()
-        print("got AI result!!!")
+        print("AI result obtained!")
         # Redirect back to the "display_xrays" view
         return redirect("display_xrays")

@@ -3,3 +3,12 @@ Pillow==9.4.0
 stripe==5.2.0
 jupyter==1.0.0
 python-decouple==3.8
+torch
+torchvision
+# MMDetection dependencies (install via mim for best compatibility)
+# Run: pip install openmim && mim install mmengine mmcv mmdet
+openmim
+# Alternatively, you can install manually:
+# mmengine>=0.7.0
+# mmcv>=2.0.0
+# mmdet>=3.0.0
