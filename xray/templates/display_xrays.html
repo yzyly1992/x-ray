@@ -35,6 +35,13 @@
                         <button type="submit" name="get_ai_result_btn" value="{{ Xray.id }}" class="btn btn-primary btn-block">Get AI Result</button>
                     </form>
                     
+                    {% if Xray.can_restore_original %}
+                    <form method="POST" action="{% url 'restore_original' %}">
+                        {% csrf_token %}
+                        <button type="submit" name="restore_btn" value="{{ Xray.id }}" class="btn btn-warning btn-block">Restore Original</button>
+                    </form>
+                    {% endif %}
+                    
                     <form method="POST">
                         {% csrf_token %}
                         <button type="submit" name="view_btn" value="{{ Xray.id }}"

@@ -11,7 +11,8 @@ urlpatterns = [
     path('view_xray/<int:xray_id>', view_xray, name='view_xray'),
     path('success-upload', success_upload, name='success_upload'),
     path('delete_all_xrays', delete_all_xrays, name='delete_all_xrays'),
-    path('get_ai_result', get_ai_result, name='get_ai_result')
+    path('get_ai_result', get_ai_result, name='get_ai_result'),
+    path('restore_original', restore_original_image, name='restore_original')
 ]
  
 if settings.DEBUG:

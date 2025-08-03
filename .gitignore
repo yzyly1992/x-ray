@@ -170,3 +170,7 @@ cython_debug/
 # ML model directory
 model/
 mmdetection/
+temp/
+
+# uv files
+uv.lock

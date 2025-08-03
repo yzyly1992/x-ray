@@ -34,7 +34,7 @@ uv run mim install mmengine
 
 # Install MMCV lite version (without CUDA ops) using MIM
 echo "Installing MMCV"
-uv run mim install "mmcv>=2.0.0"
+uv run mim install "mmcv>=2.0.0rc4, <2.2.0"
 
 echo "=== Step 1: Install MMDetection from source ==="
 uv run mim install "mmdet"
